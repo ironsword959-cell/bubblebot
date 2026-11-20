@@ -12,6 +12,7 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class SystemUIHook implements IXposedHookLoadPackage {
+
     private static final String SYSTEMUI = "com.android.systemui";
     private static final String TARGET_PKG = "com.cancer666.bubblebot.stealth";
     private static final long LONG_PRESS_MS = 600L;
@@ -20,19 +21,18 @@ public class SystemUIHook implements IXposedHookLoadPackage {
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
         if (!SYSTEMUI.equals(lpparam.packageName)) return;
         XposedBridge.log("BubbleBot Xposed: hooking SystemUI");
-        String[] candidates = {
+
+        String[] candidates = new String[] {
             "com.android.systemui.statusbar.phone.PhoneStatusBarView",
             "com.android.systemui.statusbar.window.StatusBarWindowView",
             "com.android.systemui.statusbar.phone.StatusBarWindowView",
         };
+
         for (String cls : candidates) {
             try {
                 XposedHelpers.findAndHookMethod(
-                    cls,
-                    lpparam.classLoader,
-                    "onTouchEvent",
-                    MotionEvent.class,
-                    buildHook(),
+                    cls, lpparam.classLoader, "onTouchEvent", MotionEvent.class,
+                    buildHook()
                 );
                 XposedBridge.log("BubbleBot Xposed: hooked " + cls);
             } catch (Throwable t) {
@@ -44,24 +44,24 @@ public class SystemUIHook implements IXposedHookLoadPackage {
     private XC_MethodHook buildHook() {
         return new XC_MethodHook() {
             private long downAt = 0L;
-            private final Handler handler = new Handler(Looper.getMainLooper());
+            private final Handler h = new Handler(Looper.getMainLooper());
             private Runnable pending;
 
             @Override
             protected void beforeHookedMethod(MethodHookParam param) {
-                MotionEvent event = (MotionEvent) param.args[0];
-                int action = event.getAction();
+                MotionEvent ev = (MotionEvent) param.args[0];
+                int action = ev.getAction();
                 if (action == MotionEvent.ACTION_DOWN) {
                     downAt = System.currentTimeMillis();
-                    Context context = (Context) XposedHelpers.getObjectField(param.thisObject, "mContext");
+                    Context ctx = (Context) XposedHelpers.getObjectField(
+                        param.thisObject, "mContext");
                     pending = new Runnable() {
-                        @Override
-                        public void run() {
+                        @Override public void run() {
                             if (System.currentTimeMillis() - downAt >= LONG_PRESS_MS) {
-                                Intent intent = new Intent("com.cancer666.bubblebot.TRIGGER");
-                                intent.setPackage(TARGET_PKG);
+                                Intent i = new Intent("com.cancer666.bubblebot.TRIGGER");
+                                i.setPackage(TARGET_PKG);
                                 try {
-                                    context.sendBroadcast(intent);
+                                    ctx.sendBroadcast(i);
                                     XposedBridge.log("BubbleBot trigger sent");
                                 } catch (Throwable t) {
                                     XposedBridge.log("BubbleBot send fail: " + t.getMessage());
@@ -69,9 +69,10 @@ public class SystemUIHook implements IXposedHookLoadPackage {
                             }
                         }
                     };
-                    handler.postDelayed(pending, LONG_PRESS_MS + 50L);
-                } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-                    if (pending != null) handler.removeCallbacks(pending);
+                    h.postDelayed(pending, LONG_PRESS_MS + 50L);
+                } else if (action == MotionEvent.ACTION_UP
+                        || action == MotionEvent.ACTION_CANCEL) {
+                    if (pending != null) h.removeCallbacks(pending);
                     downAt = 0L;
                 }
             }
