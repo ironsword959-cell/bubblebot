@@ -38,3 +38,24 @@ firebase deploy --only functions
 ```
 
 The callable function requires an authenticated Firebase user and valid App Check token. It invokes Gemini on Vertex AI in `us-central1`.
+
+
+# manual-input
+
+Semua yang perlu diisi tangan. Tidak ada curl, tidak ada download.
+
+## google-services.json
+
+Ganti dengan file asli dari Firebase console:
+1. https://console.firebase.google.com
+2. Project settings → Your apps → Android
+3. Package name: `com.cancer666.bubblebot.stealth`
+4. Download → timpa file ini
+
+Selama masih dummy, build tetap sukses, Firebase Auth/Functions
+return UNAUTHENTICATED saat APK dipakai.
+
+## xposed-stubs/
+
+Lima file `.java`. CI compile jadi `xposed/libs/xposed-stubs.jar`
+sebelum build. Tidak perlu diubah.
