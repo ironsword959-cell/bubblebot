@@ -12,42 +12,45 @@ import com.cancer666.bubblebot.stealth.databinding.ActivityMainBinding
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+
+    private lateinit var b: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        b = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(b.root)
 
         lifecycleScope.launch {
             runCatching {
                 AskClient.ensureSignedIn()
-                binding.statusText.text = "terhubung · siap"
+                b.statusText.text = "terhubung · siap"
             }.onFailure {
-                binding.statusText.text = "gagal auth: ${it.message}"
+                b.statusText.text = "gagal auth: ${it.message}"
             }
         }
 
-        binding.btnOverlayPerm.setOnClickListener {
+        b.btnOverlayPerm.setOnClickListener {
             startActivity(
                 Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName"),
-                ),
+                    Uri.parse("package:$packageName")
+                )
             )
         }
-        binding.btnStart.setOnClickListener {
+
+        b.btnStart.setOnClickListener {
             if (!Settings.canDrawOverlays(this)) {
                 Toast.makeText(this, "Aktifkan izin overlay dulu", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            val intent = Intent(this, OverlayService::class.java)
-            if (Build.VERSION.SDK_INT >= 26) startForegroundService(intent) else startService(intent)
+            val i = Intent(this, OverlayService::class.java)
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(i) else startService(i)
             moveTaskToBack(true)
         }
-        binding.btnStop.setOnClickListener {
+
+        b.btnStop.setOnClickListener {
             stopService(Intent(this, OverlayService::class.java))
-            binding.statusText.text = "berhenti"
+            b.statusText.text = "berhenti"
         }
     }
 }
