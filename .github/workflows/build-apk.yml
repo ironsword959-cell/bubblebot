@@ -68,10 +68,10 @@ jobs:
 
       # Bagian yang gw ubah: Build dipisah biar gampang dilacak
       - name: build xposed module
-        run: gradle :xposed:assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :xposed:assembleDebug --no-daemon --stacktrace
 
       - name: build app client
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: list produced APKs
         if: always()
