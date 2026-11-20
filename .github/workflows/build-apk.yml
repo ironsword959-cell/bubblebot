@@ -14,20 +14,30 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: verify preinstalled Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls "$ANDROID_HOME/cmdline-tools" || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --version || true
-
       - name: install platform + build-tools
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            --install "platforms;android-35" "build-tools;35.0.0" "platform-tools"
-          ls "$ANDROID_HOME/platforms"
-          ls "$ANDROID_HOME/build-tools"
+          SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)
+          [ -x "$SDKM" ] || { echo "sdkmanager tidak ada"; exit 1; }
+          yes | "$SDKM" --licenses >/dev/null 2>&1 || true
+          "$SDKM" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: fetch xposed api-82.jar
+        run: |
+          mkdir -p xposed/libs
+          for URL in \
+            "https://api.xposed.info/api-82.jar" \
+            "https://raw.githubusercontent.com/LSPosed/LSPosed/master/magisk-loader/src/main/resources/xposed/api-82.jar" \
+            "https://github.com/rovo89/XposedBridge/raw/art/app/build/api-82.jar"
+          do
+            if curl -fsSL --retry 2 -o xposed/libs/api-82.jar "$URL"; then
+              if [ -s xposed/libs/api-82.jar ] && unzip -t xposed/libs/api-82.jar >/dev/null 2>&1; then
+                echo "ok: $URL"; break
+              fi
+            fi
+          done
+          [ -s xposed/libs/api-82.jar ] || { echo "semua mirror gagal"; exit 1; }
+          unzip -l xposed/libs/api-82.jar | grep -q 'de/robv/android/xposed/IXposedHookLoadPackage.class' \
+            || { echo "jar bukan api xposed"; exit 1; }
 
       - name: write google-services.json
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
@@ -40,9 +50,14 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug :xposed:assembleDebug --no-daemon --stacktrace
 
+      - name: list produced APKs
+        if: always()
+        run: find . -name "*.apk" -type f -exec ls -lh {} \;
+
       - uses: actions/upload-artifact@v4
         with:
           name: apks
           path: |
             app/build/outputs/apk/debug/*.apk
             xposed/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
