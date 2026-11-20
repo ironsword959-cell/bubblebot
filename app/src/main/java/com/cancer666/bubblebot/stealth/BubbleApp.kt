@@ -13,20 +13,15 @@ class BubbleApp : Application() {
         super.onCreate()
         FirebaseApp.initializeApp(this)
         FirebaseAppCheck.getInstance().installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance(),
+            PlayIntegrityAppCheckProviderFactory.getInstance()
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Overlay",
-                NotificationManager.IMPORTANCE_LOW,
+            val ch = NotificationChannel(
+                CHANNEL_ID, "Overlay", NotificationManager.IMPORTANCE_LOW
             ).apply { setShowBadge(false) }
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(ch)
         }
         Prefs.init(this)
     }
-
-    companion object {
-        const val CHANNEL_ID = "bubble_overlay"
-    }
+    companion object { const val CHANNEL_ID = "bubble_overlay" }
 }
