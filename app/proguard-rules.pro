@@ -1,0 +1,3 @@
+-keep class com.cancer666.bubblebot.stealth.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*

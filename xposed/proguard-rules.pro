@@ -1,0 +1,2 @@
+-keep class com.cancer666.bubblebot.xposed.** { *; }
+-keep class de.robv.android.xposed.** { *; }
