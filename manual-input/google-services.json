@@ -1,20 +1,28 @@
 {
   "project_info": {
-    "project_number": "0",
-    "project_id": "bubblebot-exam",
-    "storage_bucket": "bubblebot-exam.appspot.com"
+    "project_number": "612305990835",
+    "project_id": "bubblebot-6d25a",
+    "storage_bucket": "bubblebot-6d25a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:0:android:0000000000000000",
+        "mobilesdk_app_id": "1:612305990835:android:c6e2f45a5c79091c2eecc6",
         "android_client_info": {
           "package_name": "com.cancer666.bubblebot.stealth"
         }
       },
       "oauth_client": [],
-      "api_key": [{ "current_key": "dummy" }],
-      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkegRUYp5wlYkMPVAdJjgt3LaKrbSS1Oo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"
