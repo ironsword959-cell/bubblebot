@@ -13,7 +13,7 @@
         }
       },
       "oauth_client": [],
-      "api_key": [{ "current_key": "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" }],
+      "api_key": [{ "current_key": "dummy" }],
       "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
     }
   ],
