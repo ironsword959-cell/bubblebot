@@ -21,34 +21,53 @@ jobs:
           yes | "$SDKM" --licenses >/dev/null 2>&1 || true
           "$SDKM" --install "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
-      - name: fetch xposed api-82.jar
+      - name: compile xposed stubs from manual-input
         run: |
-          mkdir -p xposed/libs
-          for URL in \
-            "https://api.xposed.info/api-82.jar" \
-            "https://raw.githubusercontent.com/LSPosed/LSPosed/master/magisk-loader/src/main/resources/xposed/api-82.jar" \
-            "https://github.com/rovo89/XposedBridge/raw/art/app/build/api-82.jar"
-          do
-            if curl -fsSL --retry 2 -o xposed/libs/api-82.jar "$URL"; then
-              if [ -s xposed/libs/api-82.jar ] && unzip -t xposed/libs/api-82.jar >/dev/null 2>&1; then
-                echo "ok: $URL"; break
-              fi
-            fi
-          done
-          [ -s xposed/libs/api-82.jar ] || { echo "semua mirror gagal"; exit 1; }
-          unzip -l xposed/libs/api-82.jar | grep -q 'de/robv/android/xposed/IXposedHookLoadPackage.class' \
-            || { echo "jar bukan api xposed"; exit 1; }
+          [ -d manual-input/xposed-stubs ] || { echo "manual-input/xposed-stubs tidak ada"; exit 1; }
+          SOURCES=$(find manual-input/xposed-stubs -name '*.java' | sort)
+          [ -n "$SOURCES" ] || { echo "tidak ada .java"; exit 1; }
+          echo "sumber:"
+          echo "$SOURCES"
+          mkdir -p /tmp/stub-classes xposed/libs
+          javac -source 17 -target 17 -d /tmp/stub-classes $SOURCES
+          cd /tmp/stub-classes
+          jar cf "$GITHUB_WORKSPACE/xposed/libs/xposed-stubs.jar" .
+          cd "$GITHUB_WORKSPACE"
+          unzip -l xposed/libs/xposed-stubs.jar | grep -q 'de/robv/android/xposed/IXposedHookLoadPackage.class' \
+            || { echo "jar stubs tidak valid"; exit 1; }
+          ls -lh xposed/libs/xposed-stubs.jar
 
-      - name: write google-services.json
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > app/google-services.json
+      - name: install google-services.json
+        run: |
+          [ -s manual-input/google-services.json ] || { echo "google-services.json kosong"; exit 1; }
+          cp manual-input/google-services.json app/google-services.json
+          grep -q '"package_name"' app/google-services.json || { echo "format salah"; exit 1; }
+
+      - name: fetch gradle-wrapper.jar
+        run: |
+          mkdir -p gradle/wrapper
+          curl -fsSL -o gradle/wrapper/gradle-wrapper.jar \
+            "https://raw.githubusercontent.com/gradle/gradle/v8.14.0/gradle/wrapper/gradle-wrapper.jar"
+          [ -s gradle/wrapper/gradle-wrapper.jar ] || { echo "wrapper jar kosong"; exit 1; }
+          ls -lh gradle/wrapper/gradle-wrapper.jar
+
+      - name: write gradlew
+        run: |
+          cat > gradlew <<'GRADLEW'
+          #!/usr/bin/env sh
+          APP_HOME=$(cd "$(dirname "$0")" && pwd)
+          CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+          if [ -n "${JAVA_HOME:-}" ]; then JAVACMD="$JAVA_HOME/bin/java"; else JAVACMD=java; fi
+          exec "$JAVACMD" -Dorg.gradle.appname=gradlew -classpath "$CLASSPATH" \
+            org.gradle.wrapper.GradleWrapperMain "$@"
+          GRADLEW
+          chmod +x gradlew
 
       - name: write local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: build debug APKs
-        run: |
-          chmod +x gradlew
-          ./gradlew :app:assembleDebug :xposed:assembleDebug --no-daemon --stacktrace
+        run: ./gradlew :app:assembleDebug :xposed:assembleDebug --no-daemon --stacktrace
 
       - name: list produced APKs
         if: always()
