@@ -7,6 +7,7 @@ plugins {
 android {
     namespace = "com.cancer666.bubblebot.stealth"
     compileSdk = 35
+
     defaultConfig {
         applicationId = "com.cancer666.bubblebot.stealth"
         minSdk = 26
@@ -14,16 +15,21 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+
     buildFeatures { viewBinding = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+
     buildTypes {
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
