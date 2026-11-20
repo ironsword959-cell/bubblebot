@@ -66,8 +66,12 @@ jobs:
       - name: write local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-      - name: build debug APKs
-        run: ./gradlew :app:assembleDebug :xposed:assembleDebug --no-daemon --stacktrace
+      # Bagian yang gw ubah: Build dipisah biar gampang dilacak
+      - name: build xposed module
+        run: ./gradlew :xposed:assembleDebug --no-daemon --stacktrace
+
+      - name: build app client
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
       - name: list produced APKs
         if: always()
