@@ -21,5 +21,5 @@ android {
 }
 
 dependencies {
-    compileOnly("libs/xposed-stubs.jar")
+    implementation(files("libs/xposed-stubs.jar"))
 }
